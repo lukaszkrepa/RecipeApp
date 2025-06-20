@@ -1,6 +1,9 @@
 package com.recipeapp.planner.services;
 
 import com.recipeapp.planner.domain.entities.UserEntity;
+import com.recipeapp.planner.errors.user.DuplicateUsernameException;
+import com.recipeapp.planner.errors.user.InvalidUserInputException;
+import com.recipeapp.planner.errors.user.UserNotFoundException;
 import com.recipeapp.planner.repositories.UserRepository;
 import com.recipeapp.planner.services.impl.UserServiceImpl;
 import org.junit.jupiter.api.*;
@@ -59,14 +62,14 @@ public class UserServiceTests {
     @DisplayName("create user with empty name")
     @Order(2)
     public void createUserWithEmptyNameTest() {
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(""));
+        assertThrows(InvalidUserInputException.class, () -> userService.createUser(""));
     }
 
     @Test
     @DisplayName("create user with null name")
     @Order(3)
     public void createUserWithNullNameTest() {
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(null));
+        assertThrows(InvalidUserInputException.class, () -> userService.createUser(null));
     }
 
     @Test
@@ -74,7 +77,7 @@ public class UserServiceTests {
     @Order(4)
     public void createUserWithExistingNameTest() {
         when(userRepository.existsByUsername("user")).thenReturn(true);
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser("user"));
+        assertThrows(DuplicateUsernameException.class, () -> userService.createUser("user"));
     }
 
     @Test
@@ -101,14 +104,14 @@ public class UserServiceTests {
     @Order(6)
     public void getUserByIdWithNonExistingIdTest() {
         when(userRepository.findById(any())).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> userService.getUserById(UUID.randomUUID()));
+        assertThrows(UserNotFoundException.class, () -> userService.getUserById(UUID.randomUUID()));
     }
 
     @Test
     @DisplayName("get user by id with null id")
     @Order(7)
     public void getUserByIdWithNullIdTest() {
-        assertThrows(IllegalArgumentException.class, () -> userService.getUserById(null));
+        assertThrows(InvalidUserInputException.class, () -> userService.getUserById(null));
     }
 
     @Test
@@ -135,14 +138,14 @@ public class UserServiceTests {
     @Order(9)
     public void getUserByUsernameWithNonExistingUsernameTest() {
         when(userRepository.findUserEntitieByUsername("non-existing")).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> userService.getUserByUsername("non-existing"));
+        assertThrows(UserNotFoundException.class, () -> userService.getUserByUsername("non-existing"));
     }
 
     @Test
     @DisplayName("get user by username with null username")
     @Order(10)
     public void getUserByUsernameWithNullUsernameTest() {
-        assertThrows(IllegalArgumentException.class, () -> userService.getUserByUsername(null));
+        assertThrows(InvalidUserInputException.class, () -> userService.getUserByUsername(null));
     }
 
     @Test
@@ -195,14 +198,14 @@ public class UserServiceTests {
     @Order(14)
     public void updateUserWithNonExistingIdTest() {
         when(userRepository.findById(any())).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(UUID.randomUUID(), "newUser"));
+        assertThrows(UserNotFoundException.class, () -> userService.updateUser(UUID.randomUUID(), "newUser"));
     }
 
     @Test
     @DisplayName("update user with null id")
     @Order(15)
     public void updateUserWithNullIdTest() {
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(null, "newUser"));
+        assertThrows(InvalidUserInputException.class, () -> userService.updateUser(null, "newUser"));
     }
 
     @Test
@@ -211,7 +214,7 @@ public class UserServiceTests {
     public void updateUserWithEmptyNameTest() {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(id)).thenReturn(Optional.of(new UserEntity(id, "user")));
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(id, ""));
+        assertThrows(InvalidUserInputException.class, () -> userService.updateUser(id, ""));
     }
 
     @Test
@@ -220,7 +223,7 @@ public class UserServiceTests {
     public void updateUserWithNullNameTest() {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(id)).thenReturn(Optional.of(new UserEntity(id, "user")));
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(id, null));
+        assertThrows(InvalidUserInputException.class, () -> userService.updateUser(id, null));
     }
 
     @Test
@@ -230,7 +233,7 @@ public class UserServiceTests {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(id)).thenReturn(Optional.of(new UserEntity(id, "user2")));
         when(userRepository.existsByUsername("user")).thenReturn(true);
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(id, "user"));
+        assertThrows(DuplicateUsernameException.class, () -> userService.updateUser(id, "user"));
     }
 
     @Test
@@ -252,13 +255,13 @@ public class UserServiceTests {
     @Order(20)
     public void deleteUserWithNonExistingIdTest() {
         when(userRepository.existsById(any())).thenReturn(false);
-        assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(UUID.randomUUID()));
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(UUID.randomUUID()));
     }
 
     @Test
     @DisplayName("delete user with null id")
     @Order(21)
     public void deleteUserWithNullIdTest() {
-        assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(null));
+        assertThrows(InvalidUserInputException.class, () -> userService.deleteUser(null));
     }
 }
