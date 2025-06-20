@@ -239,7 +239,7 @@ public class UserServiceTests {
     public void deleteUserTest() {
         UUID id = UUID.randomUUID();
         UserEntity user = new UserEntity(id, "user");
-        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(userRepository.existsById(id)).thenReturn(true);
         doNothing().when(userRepository).deleteById(id);
 
         userService.deleteUser(id);
@@ -251,7 +251,7 @@ public class UserServiceTests {
     @DisplayName("delete user with non-existing id")
     @Order(20)
     public void deleteUserWithNonExistingIdTest() {
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
+        when(userRepository.existsById(any())).thenReturn(false);
         assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(UUID.randomUUID()));
     }
 
