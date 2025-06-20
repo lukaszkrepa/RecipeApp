@@ -1,6 +1,9 @@
 package com.recipeapp.planner.services.impl;
 
 import com.recipeapp.planner.domain.entities.UserEntity;
+import com.recipeapp.planner.errors.user.DuplicateUsernameException;
+import com.recipeapp.planner.errors.user.InvalidUserInputException;
+import com.recipeapp.planner.errors.user.UserNotFoundException;
 import com.recipeapp.planner.repositories.UserRepository;
 import com.recipeapp.planner.services.UserService;
 import org.springframework.stereotype.Service;
@@ -20,14 +23,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserEntity createUser(String name) {
         if (name == null) {
-            throw new IllegalArgumentException("Username cannot be null");
+            throw new InvalidUserInputException("Username cannot be null");
         }
         if (name.isEmpty()){
-            throw new IllegalArgumentException("Username cannot be empty");
+            throw new InvalidUserInputException("Username cannot be empty");
 
         }
         if (userRepository.existsByUsername(name)){
-            throw new IllegalArgumentException("User with username " + name + " already exists");
+            throw new DuplicateUsernameException("User with username " + name + " already exists");
         }
         UserEntity user = UserEntity.builder()
                 .username(name)
@@ -38,21 +41,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserEntity getUserById(UUID userId) {
         if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
+            throw new InvalidUserInputException("User ID cannot be null");
         }
-        return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " does not exist"));
+        return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " does not exist"));
 
     }
 
     @Override
     public UserEntity getUserByUsername(String username) {
         if (username == null) {
-            throw new IllegalArgumentException("Username cannot be null");
+            throw new InvalidUserInputException("Username cannot be null");
         }
         if (username.isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
+            throw new InvalidUserInputException("Username cannot be empty");
         }
-        return userRepository.findUserEntitieByUsername(username).orElseThrow(() -> new IllegalArgumentException("User with username " + username + " does not exist"));
+        return userRepository.findUserEntitieByUsername(username).orElseThrow(() -> new UserNotFoundException("User with username " + username + " does not exist"));
 
     }
 
@@ -64,18 +67,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserEntity updateUser(UUID userId, String newName) {
         if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
+            throw new InvalidUserInputException("User ID cannot be null");
         }
         if (newName == null) {
-            throw new IllegalArgumentException("Username cannot be null");
+            throw new InvalidUserInputException("Username cannot be null");
         }
         if (newName.isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
+            throw new InvalidUserInputException("Username cannot be empty");
         }
         if (userRepository.existsByUsername(newName)) {
-            throw new IllegalArgumentException("User with username " + newName + " already exists");
+            throw new DuplicateUsernameException("User with username " + newName + " already exists");
         }
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " does not exist"));
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " does not exist"));
         user.setUsername(newName);
         return userRepository.save(user);
     }
@@ -83,10 +86,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(UUID userId) {
         if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
+            throw new InvalidUserInputException("User ID cannot be null");
         }
         if (!userRepository.existsById(userId)) {
-            throw new IllegalArgumentException("User with ID " + userId + " does not exist");
+            throw new UserNotFoundException("User with ID " + userId + " does not exist");
         }
         userRepository.deleteById(userId);
     }
