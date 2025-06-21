@@ -134,7 +134,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("User not found"));
+                .andExpect(jsonPath("$.error.message").value("User not found"));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Invalid input"));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"));
     }
 
     @Test
@@ -187,7 +187,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("User with this name already exists"));
+                .andExpect(jsonPath("$.error.message").value("User with this username already exists"));
     }
 
     @Test
@@ -208,7 +208,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data.username").value("Test"))
                 .andExpect(jsonPath("$.data.userId").exists())
-                .andExpect(jsonPath("$.error").value(nullValue()));
+                .andExpect(jsonPath("$.error.message").doesNotExist());
     }
 
     @Test
@@ -225,7 +225,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Invalid input"));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"));
     }
 
     @Test
@@ -243,7 +243,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("User not found"));
+                .andExpect(jsonPath("$.error.message").value("User not found"));
     }
 
     @Test
@@ -259,7 +259,7 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value(nullValue()));
+                .andExpect(jsonPath("$.error.message").doesNotExist());
     }
 
     @Test
@@ -275,6 +275,6 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("User not found"));
+                .andExpect(jsonPath("$.error.message").value("User not found"));
     }
 }

@@ -1,6 +1,8 @@
 package com.recipeapp.planner.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recipeapp.planner.api.ApiError;
+import com.recipeapp.planner.api.ApiResponse;
 import com.recipeapp.planner.domain.dto.UserRequestDto;
 import com.recipeapp.planner.domain.dto.UserResponseDto;
 import com.recipeapp.planner.domain.entities.UserEntity;
@@ -9,6 +11,7 @@ import com.recipeapp.planner.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,54 +28,63 @@ public class UserController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers().stream().map(user -> objectMapper.convertValue(user, UserResponseDto.class)).toList());
+    public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers() {
+
+        ApiResponse<List<UserResponseDto>> response = ApiResponse.<List<UserResponseDto>>builder()
+                .data(userService.getAllUsers().stream().map(user -> objectMapper.convertValue(user, UserResponseDto.class)).toList())
+                .success(true)
+                .timestamp(Instant.now())
+                .error(null)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping()
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto userRequestDto) {
-        try {
-            UserEntity userEntity = userService.createUser(userRequestDto.username());
-            return ResponseEntity.ok(objectMapper.convertValue(userEntity, UserResponseDto.class));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequestDto) {
+        UserEntity userEntity = userService.createUser(userRequestDto.username());
+        ApiResponse<UserResponseDto> response = ApiResponse.<UserResponseDto>builder()
+                .data(objectMapper.convertValue(userEntity, UserResponseDto.class))
+                .success(true)
+                .timestamp(Instant.now())
+                .error(null)
+                .build();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
-        try {
-            UserEntity userEntity = userService.getUserById(UUID.fromString(id));
-            return ResponseEntity.ok(objectMapper.convertValue(userEntity, UserResponseDto.class));
-        } catch (UserNotFoundException e){
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable String id) {
+        UserEntity userEntity = userService.getUserById(UUID.fromString(id));
+        ApiResponse<UserResponseDto> response = ApiResponse.<UserResponseDto>builder()
+                .data(objectMapper.convertValue(userEntity, UserResponseDto.class))
+                .success(true)
+                .timestamp(Instant.now())
+                .error(null)
+                .build();
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable String id, @RequestBody UserRequestDto userRequestDto) {
-        try {
-            UserEntity userEntity = userService.updateUser(UUID.fromString(id), userRequestDto.username());
-            return ResponseEntity.ok(objectMapper.convertValue(userEntity, UserResponseDto.class));
-        } catch (UserNotFoundException e){
-            return ResponseEntity.notFound().build();
-        }
-        catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ApiResponse<UserResponseDto>> updateUser(@PathVariable String id, @RequestBody UserRequestDto userRequestDto) {
+        UserEntity userEntity = userService.updateUser(UUID.fromString(id), userRequestDto.username());
+        ApiResponse<UserResponseDto> response = ApiResponse.<UserResponseDto>builder()
+                .data(objectMapper.convertValue(userEntity, UserResponseDto.class))
+                .success(true)
+                .timestamp(Instant.now())
+                .error(null)
+                .build();
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<UserResponseDto> deleteUser(@PathVariable String id) {
-        try {
-            userService.deleteUser(UUID.fromString(id));
-            return ResponseEntity.ok().build();
-        } catch (UserNotFoundException e){
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ApiResponse<UserResponseDto>> deleteUser(@PathVariable String id) {
+        userService.deleteUser(UUID.fromString(id));
+        ApiResponse<UserResponseDto> response = ApiResponse.<UserResponseDto>builder()
+                .data(null)
+                .success(true)
+                .timestamp(Instant.now())
+                .error(null)
+                .build();
+        return ResponseEntity.ok(response);
     }
 }
