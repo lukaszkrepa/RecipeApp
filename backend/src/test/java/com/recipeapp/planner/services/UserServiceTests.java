@@ -7,9 +7,10 @@ import com.recipeapp.planner.errors.user.UserNotFoundException;
 import com.recipeapp.planner.repositories.UserRepository;
 import com.recipeapp.planner.services.impl.UserServiceImpl;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DisplayName("<= UserServiceTests =>")
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTests {
 
     @Mock
@@ -26,17 +28,6 @@ public class UserServiceTests {
     @InjectMocks
     private UserServiceImpl userService;
 
-    private AutoCloseable closeable;
-
-    @BeforeEach
-    void setup() {
-        closeable = MockitoAnnotations.openMocks(this);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        closeable.close();
-    }
 
     @Test
     @DisplayName("createUser")
@@ -213,7 +204,6 @@ public class UserServiceTests {
     @Order(16)
     public void updateUserWithEmptyNameTest() {
         UUID id = UUID.randomUUID();
-        when(userRepository.findById(id)).thenReturn(Optional.of(new UserEntity(id, "user")));
         assertThrows(InvalidUserInputException.class, () -> userService.updateUser(id, ""));
     }
 
@@ -222,7 +212,6 @@ public class UserServiceTests {
     @Order(17)
     public void updateUserWithNullNameTest() {
         UUID id = UUID.randomUUID();
-        when(userRepository.findById(id)).thenReturn(Optional.of(new UserEntity(id, "user")));
         assertThrows(InvalidUserInputException.class, () -> userService.updateUser(id, null));
     }
 
@@ -231,7 +220,6 @@ public class UserServiceTests {
     @Order(18)
     public void updateUserWithExistingNameTest() {
         UUID id = UUID.randomUUID();
-        when(userRepository.findById(id)).thenReturn(Optional.of(new UserEntity(id, "user2")));
         when(userRepository.existsByUsername("user")).thenReturn(true);
         assertThrows(DuplicateUsernameException.class, () -> userService.updateUser(id, "user"));
     }
