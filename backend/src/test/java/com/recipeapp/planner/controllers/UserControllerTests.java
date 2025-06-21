@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = UserController.class)
@@ -57,6 +58,7 @@ public class UserControllerTests {
     void getAllUsers() throws Exception {
         when(userService.getAllUsers()).thenReturn(List.of());
         mockMvc.perform(get("/users"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().json("[]"));
     }
@@ -66,10 +68,10 @@ public class UserControllerTests {
     @Order(2)
     void getAllUsersWithOneUser() throws Exception {
 
-        when(userService.getAllUsers()).thenReturn(List.of(UserEntity.builder().username("Test").build()));
+        when(userService.getAllUsers()).thenReturn(List.of(UserEntity.builder().userId(UUID.randomUUID()).username("Test").build()));
         mockMvc.perform(get("/users"))
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(""))
                 .andExpect(jsonPath("$[0].username").value("Test"))
                 .andExpect(jsonPath("$[0].userId").exists())
                 .andExpect(jsonPath("$[0].userId").isNotEmpty());
@@ -81,12 +83,12 @@ public class UserControllerTests {
     void getAllUsersWithTwoUsers() throws Exception {
 
         when(userService.getAllUsers()).thenReturn(List.of(
-                UserEntity.builder().username("Test").build(),
-                UserEntity.builder().username("Test2").build()
+                UserEntity.builder().userId(UUID.randomUUID()).username("Test").build(),
+                UserEntity.builder().userId(UUID.randomUUID()).username("Test2").build()
         ));
         mockMvc.perform(get("/users"))
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(""))
                 .andExpect(jsonPath("$[0].username").value("Test"))
                 .andExpect(jsonPath("$[0].userId").exists())
                 .andExpect(jsonPath("$[0].userId").isNotEmpty())
@@ -100,10 +102,10 @@ public class UserControllerTests {
     @Order(4)
     void getUserById() throws Exception {
         UUID uuid = UUID.randomUUID();
-        when(userService.getUserById(uuid)).thenReturn(UserEntity.builder().username("Test").build());
+        when(userService.getUserById(uuid)).thenReturn(UserEntity.builder().userId(UUID.randomUUID()).username("Test").build());
         mockMvc.perform(get("/users/" + uuid))
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(""))
                 .andExpect(jsonPath("$.username").value("Test"))
                 .andExpect(jsonPath("$.userId").exists())
                 .andExpect(jsonPath("$.userId").isNotEmpty());
@@ -116,7 +118,9 @@ public class UserControllerTests {
         UUID uuid = UUID.randomUUID();
         when(userService.getUserById(uuid)).thenThrow(UserNotFoundException.class);
         mockMvc.perform(get("/users/" + uuid))
+                .andDo(print())
                 .andExpect(status().isNotFound());
+
     }
 
     @Test
@@ -125,10 +129,11 @@ public class UserControllerTests {
     void createUser() throws Exception {
         UserRequestDto userRequestDto = new UserRequestDto("Test");
 
-        when(userService.createUser("Test")).thenReturn(UserEntity.builder().username("Test").build());
+        when(userService.createUser("Test")).thenReturn(UserEntity.builder().userId(UUID.randomUUID()).username("Test").build());
 
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userRequestDto)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("Test"))
                 .andExpect(jsonPath("$.userId").exists())
@@ -142,6 +147,7 @@ public class UserControllerTests {
         when(userService.createUser("")).thenThrow(InvalidUserInputException.class);
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON).content(""))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -152,6 +158,7 @@ public class UserControllerTests {
         when(userService.createUser(null)).thenThrow(InvalidUserInputException.class);
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON).content(""))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -163,6 +170,7 @@ public class UserControllerTests {
         when(userService.createUser("Test")).thenThrow(DuplicateUsernameException.class);
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userRequestDto)))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -172,9 +180,10 @@ public class UserControllerTests {
     void updateUser() throws Exception {
         UUID uuid = UUID.randomUUID();
         UserRequestDto userRequestDto = new UserRequestDto("Test");
-        when(userService.updateUser(uuid, "Test")).thenReturn(UserEntity.builder().username("Test").build());
+        when(userService.updateUser(uuid, "Test")).thenReturn(UserEntity.builder().userId(UUID.randomUUID()).username("Test").build());
         mockMvc.perform(patch("/users/" + uuid)
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userRequestDto)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("Test"))
                 .andExpect(jsonPath("$.userId").exists())
@@ -189,6 +198,7 @@ public class UserControllerTests {
         when(userService.updateUser(uuid, "")).thenThrow(InvalidUserInputException.class);
         mockMvc.perform(patch("/users/" + uuid)
                 .contentType(MediaType.APPLICATION_JSON).content(""))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -200,6 +210,7 @@ public class UserControllerTests {
         when(userService.updateUser(uuid, null)).thenThrow(InvalidUserInputException.class);
         mockMvc.perform(patch("/users/" + uuid)
                 .contentType(MediaType.APPLICATION_JSON).content(""))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -212,6 +223,7 @@ public class UserControllerTests {
         when(userService.updateUser(uuid, "Test")).thenThrow(UserNotFoundException.class);
         mockMvc.perform(patch("/users/" + uuid)
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userRequestDto)))
+                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -223,6 +235,7 @@ public class UserControllerTests {
         when(userService.updateUser(null, "Test")).thenThrow(InvalidUserInputException.class);
         mockMvc.perform(patch("/users/" + null)
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userRequestDto)))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -234,6 +247,7 @@ public class UserControllerTests {
         doNothing().when(userService).deleteUser(uuid);
 
         mockMvc.perform(delete("/users/" + uuid))
+                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -245,6 +259,7 @@ public class UserControllerTests {
         doThrow(UserNotFoundException.class).when(userService).deleteUser(uuid);
 
         mockMvc.perform(delete("/users/" + uuid))
+                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -255,6 +270,7 @@ public class UserControllerTests {
         doThrow(InvalidUserInputException.class).when(userService).deleteUser(null);
 
         mockMvc.perform(delete("/users/" + null))
+                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
