@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Represents a generic API response wrapper.
@@ -38,4 +39,35 @@ public class ApiResponse<T> {
      * Error information, present when success is false.
      */
     private ApiError error;
+
+    public static <T> ApiResponse<T> success(T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .timestamp(Instant.now())
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> error(String code,
+                                           String message,
+                                           List<String> details) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .timestamp(Instant.now())
+                .data(null)
+                .error(ApiError.builder()
+                        .code(code)
+                        .message(message)
+                        .details(details)
+                        .build())
+                .build();
+    }
+
+    public static <T> ApiResponse<T> error(String code,
+                                           String message,
+                                           String detail) {
+        return error(code, message,
+                List.of(detail == null ? "Unknown error" : detail));
+    }
+
 }
