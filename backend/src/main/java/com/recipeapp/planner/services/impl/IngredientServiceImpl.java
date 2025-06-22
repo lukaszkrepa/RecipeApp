@@ -6,10 +6,12 @@ import com.recipeapp.planner.errors.ingredient.IngredientNotFoundException;
 import com.recipeapp.planner.errors.ingredient.InvalidIngredientInputException;
 import com.recipeapp.planner.repositories.IngredientRepository;
 import com.recipeapp.planner.services.IngredientService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class IngredientServiceImpl implements IngredientService {
 
     private final IngredientRepository ingredientRepository;
