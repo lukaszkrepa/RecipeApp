@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -162,6 +163,7 @@ public class IngredientServiceTests {
     @Order(13)
     public void updateIngredient() {
         UUID ingredientId = UUID.randomUUID();
+
         IngredientEntity existingIngredient = IngredientEntity
                 .builder()
                 .unit(Unit.GRAMS)
@@ -335,7 +337,8 @@ public class IngredientServiceTests {
     @Order(29)
     public void deleteIngredientWithNonExistingId() {
         UUID nonExistingId = UUID.randomUUID();
-        when(ingredientRepository.existsById(nonExistingId)).thenReturn(false);
+
+        when(ingredientRepository.findById(nonExistingId)).thenReturn(Optional.empty());
         assertThrows(IngredientNotFoundException.class, () -> ingredientService.deleteIngredient(nonExistingId));
     }
 
