@@ -42,8 +42,13 @@ public class IngredientController {
 
     }
     @GetMapping("/{id}")
-    public  ResponseEntity<ApiResponse<IngredientResponseDto>> getIngredientById(@PathVariable String id) {
-        IngredientResponseDto response = objectMapper.convertValue(ingredientService.getIngredientById(UUID.fromString(id)), IngredientResponseDto.class);
+    public  ResponseEntity<ApiResponse<IngredientResponseDto>> getIngredientById(@PathVariable String id) {final UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidIngredientInputException("Ingredient id is invalid");
+        }
+        IngredientResponseDto response = objectMapper.convertValue(ingredientService.getIngredientById(uuid), IngredientResponseDto.class);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
     @PatchMapping("/{id}")
@@ -84,7 +89,13 @@ public class IngredientController {
 
     @DeleteMapping("/{id}")
     public  ResponseEntity<ApiResponse<IngredientResponseDto>> deleteIngredient(@PathVariable String id) {
-        ingredientService.deleteIngredient(UUID.fromString(id));
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidIngredientInputException("Ingredient id is invalid");
+        }
+        ingredientService.deleteIngredient(uuid);
         return ResponseEntity.status(204).body(ApiResponse.success(null));
     }
 

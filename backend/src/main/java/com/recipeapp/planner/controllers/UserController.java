@@ -5,6 +5,7 @@ import com.recipeapp.planner.api.ApiResponse;
 import com.recipeapp.planner.domain.dto.UserRequestDto;
 import com.recipeapp.planner.domain.dto.UserResponseDto;
 import com.recipeapp.planner.domain.entities.UserEntity;
+import com.recipeapp.planner.errors.ingredient.InvalidIngredientInputException;
 import com.recipeapp.planner.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,14 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable String id) {
-        UserEntity userEntity = userService.getUserById(UUID.fromString(id));
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidIngredientInputException("Ingredient id is invalid");
+        }
+
+        UserEntity userEntity = userService.getUserById(uuid);
         ApiResponse<UserResponseDto> response = ApiResponse.success(objectMapper.convertValue(userEntity, UserResponseDto.class));
 
         return ResponseEntity.ok(response);
@@ -54,7 +62,14 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> updateUser(@PathVariable String id, @RequestBody UserRequestDto userRequestDto) {
-        UserEntity userEntity = userService.updateUser(UUID.fromString(id), userRequestDto.username());
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidIngredientInputException("Ingredient id is invalid");
+        }
+
+        UserEntity userEntity = userService.updateUser(uuid, userRequestDto.username());
         ApiResponse<UserResponseDto> response = ApiResponse.success(objectMapper.convertValue(userEntity, UserResponseDto.class));
 
         return ResponseEntity.ok(response);
@@ -62,7 +77,14 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> deleteUser(@PathVariable String id) {
-        userService.deleteUser(UUID.fromString(id));
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(id);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidIngredientInputException("Ingredient id is invalid");
+        }
+
+        userService.deleteUser(uuid);
         ApiResponse<UserResponseDto> response = ApiResponse.success(null);
 
         return ResponseEntity.ok(response);
