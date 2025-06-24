@@ -6,6 +6,7 @@ import com.recipeapp.planner.errors.recipe.InvalidRecipeInputException;
 import com.recipeapp.planner.errors.recipe.RecipeNotFoundException;
 import com.recipeapp.planner.errors.user.UserNotFoundException;
 import com.recipeapp.planner.repositories.RecipeRepository;
+import com.recipeapp.planner.repositories.UserRepository;
 import com.recipeapp.planner.services.impl.RecipeServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
@@ -30,6 +31,9 @@ public class RecipeServiceTests {
 
     @Mock
     RecipeRepository recipeRepository;
+
+    @Mock
+    UserRepository userRepository;
 
     @InjectMocks
     RecipeServiceImpl recipeService;
@@ -292,14 +296,16 @@ public class RecipeServiceTests {
     @DisplayName("get all recipes by UserId")
     @Order(14)
     public void getAllRecipesByUserId(){
+        UUID userId = UUID.randomUUID();
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
                 .name("Test Recipe")
                 .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
+                .createdBy(new UserEntity(userId, "test"))
                 .instructions(List.of("1.", "2.", "3."))
                 .build();
 
+        when(userRepository.existsById(userId)).thenReturn(true);
         when(recipeRepository.findAllByCreatedBy_UserId(recipe.getCreatedBy().getUserId())).thenReturn(List.of(recipe));
 
         List<RecipeEntity> savedRecipes = recipeService.getAllRecipesByUserId(recipe.getCreatedBy().getUserId());
@@ -321,8 +327,9 @@ public class RecipeServiceTests {
     @Order(15)
     public void getAllRecipesByUserIdWithNoRecipes(){
         UUID uuid = UUID.randomUUID();
-        when(recipeRepository.existsById(uuid)).thenReturn(true);
+        when(userRepository.existsById(uuid)).thenReturn(true);
         when(recipeRepository.findAllByCreatedBy_UserId(uuid)).thenReturn(List.of());
+
 
         List<RecipeEntity> savedRecipes = recipeService.getAllRecipesByUserId(uuid);
         assertNotNull(savedRecipes);
@@ -334,8 +341,6 @@ public class RecipeServiceTests {
     @Order(16)
     public void getAllRecipesByNonExistingUser(){
         UUID userId = UUID.randomUUID();
-        when(recipeRepository.existsById(userId)).thenReturn(false);
-
         assertThrows(UserNotFoundException.class, () -> recipeService.getAllRecipesByUserId(userId));
     }
 
@@ -447,7 +452,7 @@ public class RecipeServiceTests {
 
         recipeService.deleteRecipe(recipe.getRecipeId());
 
-        verify(recipeRepository, times(1)).deleteById(recipe.getRecipeId());
+        verify(recipeRepository, times(1)).delete(recipe);
     }
 
     @Test
@@ -458,6 +463,13 @@ public class RecipeServiceTests {
         when(recipeRepository.findById(uuid)).thenReturn(java.util.Optional.empty());
 
         assertThrows(RecipeNotFoundException.class, () -> recipeService.deleteRecipe(uuid));
+    }
+
+    @Test
+    @DisplayName("delete recipe with null id")
+    @Order(24)
+    public void deleteRecipeWithNullId(){
+        assertThrows(InvalidRecipeInputException.class, () -> recipeService.deleteRecipe(null));
     }
 
 }
