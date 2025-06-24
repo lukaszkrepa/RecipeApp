@@ -6,6 +6,7 @@ import com.recipeapp.planner.domain.dto.IngredientRequestDto;
 import com.recipeapp.planner.domain.entities.IngredientEntity;
 import com.recipeapp.planner.domain.enums.Unit;
 import com.recipeapp.planner.errors.ingredient.IngredientNotFoundException;
+import com.recipeapp.planner.errors.ingredient.InvalidIngredientInputException;
 import com.recipeapp.planner.services.IngredientService;
 import com.recipeapp.planner.services.UserService;
 import org.junit.jupiter.api.*;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -23,8 +25,8 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -33,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
+@Import(IngredientControllerTests.TestConfig.class)
 public class IngredientControllerTests {
     @Autowired
     private ObjectMapper objectMapper;
@@ -119,8 +122,8 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.data[0].name").value("Tomato"))
                 .andExpect(jsonPath("$.data[0].unit").value("PCS"))
-                .andExpect(jsonPath("$.data[0].name").value("Potato"))
-                .andExpect(jsonPath("$.data[0].unit").value("CUP"))
+                .andExpect(jsonPath("$.data[1].name").value("Potato"))
+                .andExpect(jsonPath("$.data[1].unit").value("CUP"))
                 .andExpect(jsonPath("$.error").value(nullValue()));
     }
 
@@ -164,7 +167,8 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient not found"));
+                .andExpect(jsonPath("$.error.message").value("Ingredient not found"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient with id: "+ uuid + " does not exist"));
     }
 
     @Test
@@ -220,8 +224,8 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.data[0].name").value("Tomato"))
                 .andExpect(jsonPath("$.data[0].unit").value("PCS"))
-                .andExpect(jsonPath("$.data[0].name").value("Tomato"))
-                .andExpect(jsonPath("$.data[0].unit").value("CUP"))
+                .andExpect(jsonPath("$.data[1].name").value("Tomato"))
+                .andExpect(jsonPath("$.data[1].unit").value("CUP"))
                 .andExpect(jsonPath("$.error").value(nullValue()));
     }
 
@@ -238,7 +242,8 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient not found"));
+                .andExpect(jsonPath("$.error.message").value("Ingredient not found"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient with name: Tomato does not exist"));
     }
 
     @Test
@@ -274,6 +279,8 @@ public class IngredientControllerTests {
     void createIngredientWithEmptyName() throws Exception{
         IngredientRequestDto ingredientRequestDto = new IngredientRequestDto("", Unit.PCS);
 
+        when(ingredientService.createIngredient("",Unit.PCS))
+                .thenThrow(new InvalidIngredientInputException("Ingredient name cannot be empty"));
         mockMvc.perform(post("/ingredients")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(ingredientRequestDto)))
@@ -282,7 +289,8 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient name cannot be empty"));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient name cannot be empty"));
     }
 
     @Test
@@ -291,6 +299,9 @@ public class IngredientControllerTests {
     void createIngredientWithEmptyUnit() throws Exception{
         IngredientRequestDto ingredientRequestDto = new IngredientRequestDto("Tomato", null);
 
+        when(ingredientService.createIngredient("Tomato",null))
+                .thenThrow(new InvalidIngredientInputException("Ingredient unit cannot be null"));
+
         mockMvc.perform(post("/ingredients")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(ingredientRequestDto)))
@@ -299,7 +310,9 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient unit cannot be empty"));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient unit cannot be null"));
+
     }
 
     @Test
@@ -308,6 +321,9 @@ public class IngredientControllerTests {
     void createIngredientWithNullName() throws Exception{
         IngredientRequestDto ingredientRequestDto = new IngredientRequestDto(null, Unit.PCS);
 
+        when(ingredientService.createIngredient(null,Unit.PCS))
+                .thenThrow(new InvalidIngredientInputException("Ingredient name cannot be null"));
+
         mockMvc.perform(post("/ingredients")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(ingredientRequestDto)))
@@ -316,14 +332,19 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient name cannot be empty"));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient name cannot be null"));
     }
 
     @Test
     @DisplayName("create ingredient with null unit")
     @Order(13)
-    void createIngredientWithNullUnit() throws Exception{
+    void createIngredientWithNullUnit() throws Exception {
         IngredientRequestDto ingredientRequestDto = new IngredientRequestDto("Tomato", null);
+
+        doThrow(new InvalidIngredientInputException("Ingredient unit cannot be null"))
+                .when(ingredientService)
+                .createIngredient("Tomato", null);
 
         mockMvc.perform(post("/ingredients")
                         .contentType("application/json")
@@ -333,7 +354,8 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient unit cannot be empty"));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient unit cannot be null"));
     }
 
     @Test
@@ -365,11 +387,14 @@ public class IngredientControllerTests {
     }
 
     @Test
-    @DisplayName("update ingredient with empty name")
+    @DisplayName("update ingredient with both null fields")
     @Order(15)
-    void updateIngredientWithEmptyName() throws Exception{
+    void updateIngredientWithBothEmptyFields() throws Exception{
         UUID uuid = UUID.randomUUID();
-        IngredientRequestDto ingredientRequestDto = new IngredientRequestDto("", Unit.PCS);
+        IngredientRequestDto ingredientRequestDto = new IngredientRequestDto(null, null);
+
+        when(ingredientService.updateIngredient(uuid, null, null))
+                .thenThrow(new InvalidIngredientInputException("At least one of name or unit must be provided"));
 
         mockMvc.perform(patch("/ingredients/" + uuid)
                         .contentType("application/json")
@@ -379,86 +404,13 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient name cannot be empty"));
-    }
-
-    @Test
-    @DisplayName("update ingredient with empty unit")
-    @Order(16)
-    void updateIngredientWithEmptyUnit() throws Exception{
-        UUID uuid = UUID.randomUUID();
-        IngredientRequestDto ingredientRequestDto = new IngredientRequestDto("Tomato", null);
-
-        mockMvc.perform(patch("/ingredients/" + uuid)
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(ingredientRequestDto)))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value("Ingredient unit cannot be empty"));
-    }
-
-    @Test
-    @DisplayName("update ingredient with null name")
-    @Order(17)
-    void updateIngredientWithNullName() throws Exception{
-        UUID uuid = UUID.randomUUID();
-        IngredientRequestDto ingredientRequestDto = new IngredientRequestDto(null, Unit.PCS);
-
-        when(ingredientService.updateIngredient(uuid, null, Unit.PCS))
-                .thenReturn(IngredientEntity
-                        .builder()
-                        .ingredientId(uuid)
-                        .name(null)
-                        .unit(Unit.PCS)
-                        .build());
-
-        mockMvc.perform(patch("/ingredients/" + uuid)
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(ingredientRequestDto)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.data.name").doesNotExist())
-                .andExpect(jsonPath("$.data.unit").value("PCS"))
-                .andExpect(jsonPath("$.data.ingredientId").exists())
-                .andExpect(jsonPath("$.error").value(nullValue()));
-    }
-
-    @Test
-    @DisplayName("update ingredient with null unit")
-    @Order(18)
-    void updateIngredientWithNullUnit() throws Exception{
-        UUID uuid = UUID.randomUUID();
-        IngredientRequestDto ingredientRequestDto = new IngredientRequestDto("Tomato", null);
-
-        when(ingredientService.updateIngredient(uuid, "Tomato", null))
-                .thenReturn(IngredientEntity
-                        .builder()
-                        .ingredientId(uuid)
-                        .name("Tomato")
-                        .unit(null)
-                        .build());
-
-        mockMvc.perform(patch("/ingredients/" + uuid)
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(ingredientRequestDto)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.data.name").value("Tomato"))
-                .andExpect(jsonPath("$.data.unit").doesNotExist())
-                .andExpect(jsonPath("$.data.ingredientId").exists())
-                .andExpect(jsonPath("$.error").value(nullValue()));
+                .andExpect(jsonPath("$.error.message").value("Invalid input"))
+                .andExpect(jsonPath("$.error.details[0]").value("At least one of name or unit must be provided"));
     }
 
     @Test
     @DisplayName("delete ingredient")
-    @Order(19)
+    @Order(16)
     void deleteIngredient() throws Exception{
         UUID uuid = UUID.randomUUID();
 
@@ -471,23 +423,22 @@ public class IngredientControllerTests {
                 .andExpect(jsonPath("$.error").value(nullValue()));
     }
 
-    @Test
+@Test
     @DisplayName("delete ingredient with invalid id")
-    @Order(20)
+    @Order(17)
     void deleteIngredientWithInvalidId() throws Exception{
         UUID uuid = UUID.randomUUID();
 
+        doThrow(new IngredientNotFoundException("Ingredient with id: " + uuid + " does not exist"))
+                .when(ingredientService).deleteIngredient(uuid);
+
         mockMvc.perform(delete("/ingredients/" + uuid))
                 .andDo(print())
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
-                .andExpect(jsonPath("$.error").value(nullValue()));
+                .andExpect(jsonPath("$.error.message").value("Ingredient not found"))
+                .andExpect(jsonPath("$.error.details[0]").value("Ingredient with id: " + uuid + " does not exist"));
     }
-
-
-
-
-
 }

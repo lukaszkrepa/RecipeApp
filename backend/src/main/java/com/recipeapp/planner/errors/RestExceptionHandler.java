@@ -1,6 +1,8 @@
 package com.recipeapp.planner.errors;
 
 import com.recipeapp.planner.api.ApiResponse;
+import com.recipeapp.planner.errors.ingredient.IngredientNotFoundException;
+import com.recipeapp.planner.errors.ingredient.InvalidIngredientInputException;
 import com.recipeapp.planner.errors.user.DuplicateUsernameException;
 import com.recipeapp.planner.errors.user.InvalidUserInputException;
 import com.recipeapp.planner.errors.user.UserNotFoundException;
@@ -40,10 +42,31 @@ public class RestExceptionHandler {
                 .body(ApiResponse.error("400", "User with this username already exists", ex.getMessage()));
     }
 
+    @ExceptionHandler(IngredientNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIngredientNotFound(IngredientNotFoundException ex) {
+        return ResponseEntity
+                .status(404)
+                .body(ApiResponse.error("404", "Ingredient not found", ex.getMessage()));
+    }
+    @ExceptionHandler(InvalidIngredientInputException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidIngredientInput(InvalidIngredientInputException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error("400", "Invalid input", ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error("400", "Invalid input", ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
         return ResponseEntity
                 .internalServerError()
                 .body(ApiResponse.error("500", "Internal server error", ex.getMessage()));
     }
+
 }
