@@ -1,5 +1,7 @@
 package com.recipeapp.planner.services;
 
+import com.recipeapp.planner.domain.dto.RecipeRequestDto;
+import com.recipeapp.planner.domain.dto.RecipeResponseDto;
 import com.recipeapp.planner.domain.entities.RecipeEntity;
 import com.recipeapp.planner.domain.entities.UserEntity;
 import com.recipeapp.planner.errors.recipe.InvalidRecipeInputException;
@@ -10,6 +12,7 @@ import com.recipeapp.planner.repositories.UserRepository;
 import com.recipeapp.planner.services.impl.RecipeServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,27 +46,35 @@ public class RecipeServiceTests {
     @DisplayName("create recipe with correct data")
     @Order(1)
     public void createRecipeWithCorrectData(){
+        UUID userId = UUID.randomUUID();
+        RecipeRequestDto recipe = new RecipeRequestDto("Test Recipe","Test Description", List.of("1.","2.","3."), userId);
 
-        RecipeEntity recipe = RecipeEntity.builder()
+        UserEntity user = UserEntity
+                .builder()
+                .userId(userId)
+                .username("test")
+                .build();
+        RecipeEntity recipeEntity = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
                 .name("Test Recipe")
                 .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(),"test"))
+                .createdBy(user)
                 .instructions(List.of("1.","2.","3."))
                 .build();
 
-        when(recipeRepository.save(recipe)).thenReturn(recipe);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(recipeRepository.save(any())).thenReturn(recipeEntity);
 
         RecipeEntity savedRecipe = recipeService.createRecipe(recipe);
         assertNotNull(savedRecipe);
         assertAll(
                 () -> assertNotNull(savedRecipe.getRecipeId()),
-                () -> assertEquals(recipe.getCreatedBy().getUserId(), savedRecipe.getCreatedBy().getUserId()),
-                () -> assertEquals(recipe.getInstructions().size(), savedRecipe.getInstructions().size()),
-                () -> assertEquals(recipe.getInstructions().get(0), savedRecipe.getInstructions().get(0)),
-                () -> assertEquals(recipe.getInstructions().get(1), savedRecipe.getInstructions().get(1)),
-                () -> assertEquals(recipe.getInstructions().get(2), savedRecipe.getInstructions().get(2)),
-                () -> assertEquals(recipe.getDescription(), savedRecipe.getDescription())
+                () -> assertEquals(recipe.userId(), savedRecipe.getCreatedBy().getUserId()),
+                () -> assertEquals(recipe.instructions().size(), savedRecipe.getInstructions().size()),
+                () -> assertEquals(recipe.instructions().get(0), savedRecipe.getInstructions().get(0)),
+                () -> assertEquals(recipe.instructions().get(1), savedRecipe.getInstructions().get(1)),
+                () -> assertEquals(recipe.instructions().get(2), savedRecipe.getInstructions().get(2)),
+                () -> assertEquals(recipe.description(), savedRecipe.getDescription())
         );
     }
 
@@ -70,14 +82,7 @@ public class RecipeServiceTests {
     @DisplayName("create recipe with empty name")
     @Order(2)
     public void createRecipeWithEmptyName(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("")
-                .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of("1.", "2.", "3."))
-                .build();
-
+        RecipeRequestDto recipe = new RecipeRequestDto("","Test Description", List.of("1.", "2.", "3."), UUID.randomUUID());
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
     }
 
@@ -85,14 +90,7 @@ public class RecipeServiceTests {
     @DisplayName("create recipe with null name")
     @Order(3)
     public void createRecipeWithNullName(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name(null)
-                .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of("1.", "2.", "3."))
-                .build();
-
+        RecipeRequestDto recipe = new RecipeRequestDto(null,"Test Description", List.of("1.", "2.", "3."), UUID.randomUUID());
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
     }
 
@@ -100,14 +98,7 @@ public class RecipeServiceTests {
     @DisplayName("create recipe with empty description")
     @Order(4)
     public void createRecipeWithEmptyDescription(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("Test Recipe")
-                .description("")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of("1.", "2.", "3."))
-                .build();
-
+        RecipeRequestDto recipe = new RecipeRequestDto("Test","", List.of("1.", "2.", "3."), UUID.randomUUID());
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
     }
 
@@ -115,14 +106,7 @@ public class RecipeServiceTests {
     @DisplayName("create recipe with null description")
     @Order(5)
     public void createRecipeWithNullDescription(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("Test Recipe")
-                .description(null)
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of("1.", "2.", "3."))
-                .build();
-
+        RecipeRequestDto recipe = new RecipeRequestDto("Test",null, List.of("1.", "2.", "3."), UUID.randomUUID());
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
     }
 
@@ -130,14 +114,7 @@ public class RecipeServiceTests {
     @DisplayName("create recipe without instructions")
     @Order(6)
     public void createRecipeWithoutInstructions(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("Test Recipe")
-                .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of())
-                .build();
-
+        RecipeRequestDto recipe = new RecipeRequestDto("Test","Test Description", List.of(), UUID.randomUUID());
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
     }
 
@@ -145,21 +122,30 @@ public class RecipeServiceTests {
     @DisplayName("create recipe with null instructions")
     @Order(7)
     public void createRecipeWithNullInstructions(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("Test Recipe")
-                .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(null)
-                .build();
-
+        RecipeRequestDto recipe = new RecipeRequestDto("Test","Test Description", null, UUID.randomUUID());
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
     }
 
+    @Test
+    @DisplayName("create recipe with null user id")
+    @Order(8)
+    public void createRecipeWithNullUserId(){
+        RecipeRequestDto recipe = new RecipeRequestDto("Test", "Test Description", List.of("1.", "2.", "3."), null);
+        assertThrows(InvalidRecipeInputException.class, () -> recipeService.createRecipe(recipe));
+    }
+
+    @Test
+    @DisplayName("create recipe with non-existing user id")
+    @Order(9)
+    public void createRecipeWithNonExistingUserId(){
+        RecipeRequestDto recipe = new RecipeRequestDto("Test", "Test Description", List.of("1.", "2.", "3."), UUID.randomUUID());
+        when(userRepository.findById(recipe.userId())).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> recipeService.createRecipe(recipe));
+    }
 
     @Test
     @DisplayName("get recipe by id")
-    @Order(8)
+    @Order(10)
     public void getRecipeById(){
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
@@ -187,7 +173,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get recipe by id with non-existing id")
-    @Order(9)
+    @Order(11)
     public void getRecipeByIdWithNonExistentId(){
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
@@ -204,14 +190,14 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get recipe by id with null id")
-    @Order(10)
+    @Order(12)
     public void getRecipeByIdWithNullId(){
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.getRecipeById(null));
     }
 
     @Test
     @DisplayName("get all recipes")
-    @Order(11)
+    @Order(13)
     public void getAllRecipes(){
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
@@ -239,7 +225,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get all recipes with no recipes")
-    @Order(12)
+    @Order(14)
     public void getAllRecipesWithNoRecipes(){
         when(recipeRepository.findAll()).thenReturn(List.of());
 
@@ -250,7 +236,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get all recipes with two recipes")
-    @Order(13)
+    @Order(15)
     public void getAllRecipesWithTwoRecipes(){
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
@@ -294,7 +280,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get all recipes by UserId")
-    @Order(14)
+    @Order(16)
     public void getAllRecipesByUserId(){
         UUID userId = UUID.randomUUID();
         RecipeEntity recipe = RecipeEntity.builder()
@@ -324,7 +310,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get all recipes by UserId with no recipes")
-    @Order(15)
+    @Order(17)
     public void getAllRecipesByUserIdWithNoRecipes(){
         UUID uuid = UUID.randomUUID();
         when(userRepository.existsById(uuid)).thenReturn(true);
@@ -338,7 +324,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("get all recipes by non-existing user")
-    @Order(16)
+    @Order(18)
     public void getAllRecipesByNonExistingUser(){
         UUID userId = UUID.randomUUID();
         assertThrows(UserNotFoundException.class, () -> recipeService.getAllRecipesByUserId(userId));
@@ -346,7 +332,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("update recipe")
-    @Order(17)
+    @Order(19)
     public void updateRecipe(){
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
@@ -356,6 +342,7 @@ public class RecipeServiceTests {
                 .instructions(List.of("1.", "2.", "3."))
                 .build();
 
+        RecipeRequestDto recipeRequestDto = new RecipeRequestDto("Updated Recipe", "Updated Description", List.of("1.", "2.", "3.", "4."), recipe.getCreatedBy().getUserId());
         RecipeEntity update = RecipeEntity.builder()
                 .recipeId(recipe.getRecipeId())
                 .name("Updated Recipe")
@@ -368,7 +355,7 @@ public class RecipeServiceTests {
         when(recipeRepository.save(update)).thenReturn(update);
 
 
-        RecipeEntity savedRecipe = recipeService.updateRecipe(update.getRecipeId(), update);
+        RecipeEntity savedRecipe = recipeService.updateRecipe(update.getRecipeId(), recipeRequestDto);
         assertNotNull(savedRecipe);
         assertAll(
                 () -> assertNotNull(savedRecipe.getRecipeId()),
@@ -383,62 +370,45 @@ public class RecipeServiceTests {
     }
     @Test
     @DisplayName("update recipe with non-existing id")
-    @Order(18)
+    @Order(20)
     public void updateRecipeWithNonExistingId(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("Test Recipe")
-                .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of("1.", "2.", "3."))
-                .build();
+        UUID recipeId = UUID.randomUUID();
+        RecipeRequestDto recipeRequestDto = new RecipeRequestDto("Updated Recipe", "Updated Description", List.of("1.", "2.", "3.", "4."), UUID.randomUUID());
 
-        when(recipeRepository.findById(recipe.getRecipeId())).thenReturn(java.util.Optional.empty());
+        when(recipeRepository.findById(recipeId)).thenReturn(java.util.Optional.empty());
 
-        assertThrows(RecipeNotFoundException.class, () -> recipeService.updateRecipe(recipe.getRecipeId(), recipe));
+        assertThrows(RecipeNotFoundException.class, () -> recipeService.updateRecipe(recipeId, recipeRequestDto));
     }
 
     @Test
     @DisplayName("update recipe with null id")
-    @Order(19)
+    @Order(21)
     public void updateRecipeWithNullId(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("Test Recipe")
-                .description("Test Description")
-                .createdBy(new UserEntity(UUID.randomUUID(), "test"))
-                .instructions(List.of("1.", "2.", "3."))
-                .build();
+        RecipeRequestDto recipeRequestDto = new RecipeRequestDto("Updated Recipe", "Updated Description", List.of("1.", "2.", "3.", "4."), UUID.randomUUID());
 
-        assertThrows(InvalidRecipeInputException.class, () -> recipeService.updateRecipe(null, recipe));
+
+        assertThrows(InvalidRecipeInputException.class, () -> recipeService.updateRecipe(null, recipeRequestDto));
     }
 
     @Test
     @DisplayName("update recipe with null recipe")
-    @Order(20)
+    @Order(22)
     public void updateRecipeWithNullRecipe(){
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.updateRecipe(UUID.randomUUID(), null));
     }
 
     @Test
     @DisplayName("update recipe with empty data")
-    @Order(21)
+    @Order(23)
     public void updateRecipeWithEmptyData(){
-        RecipeEntity recipe = RecipeEntity.builder()
-                .recipeId(UUID.randomUUID())
-                .name("")
-                .description("")
-                .createdBy(new UserEntity(UUID.randomUUID(), "Test"))
-                .instructions(List.of())
-                .build();
-
-        assertThrows(InvalidRecipeInputException.class, () -> recipeService.updateRecipe(recipe.getRecipeId(), recipe));
+        RecipeRequestDto recipeRequestDto = new RecipeRequestDto("", "", List.of(), UUID.randomUUID());
+        assertThrows(InvalidRecipeInputException.class, () -> recipeService.updateRecipe(UUID.randomUUID(), recipeRequestDto));
     }
 
 
     @Test
     @DisplayName("delete recipe")
-    @Order(22)
+    @Order(24)
     public void deleteRecipe(){
         RecipeEntity recipe = RecipeEntity.builder()
                 .recipeId(UUID.randomUUID())
@@ -457,7 +427,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("delete recipe with non-existing id")
-    @Order(23)
+    @Order(25)
     public void deleteRecipeWithNonExistingId(){
         UUID uuid = UUID.randomUUID();
         when(recipeRepository.findById(uuid)).thenReturn(java.util.Optional.empty());
@@ -467,7 +437,7 @@ public class RecipeServiceTests {
 
     @Test
     @DisplayName("delete recipe with null id")
-    @Order(24)
+    @Order(26)
     public void deleteRecipeWithNullId(){
         assertThrows(InvalidRecipeInputException.class, () -> recipeService.deleteRecipe(null));
     }

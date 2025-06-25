@@ -1,16 +1,20 @@
 package com.recipeapp.planner.services.impl;
 
+import com.recipeapp.planner.domain.dto.RecipeRequestDto;
 import com.recipeapp.planner.domain.entities.RecipeEntity;
+import com.recipeapp.planner.domain.entities.UserEntity;
 import com.recipeapp.planner.errors.recipe.InvalidRecipeInputException;
 import com.recipeapp.planner.errors.recipe.RecipeNotFoundException;
 import com.recipeapp.planner.errors.user.UserNotFoundException;
 import com.recipeapp.planner.repositories.RecipeRepository;
 import com.recipeapp.planner.repositories.UserRepository;
 import com.recipeapp.planner.services.RecipeService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeRepository recipeRepository;
@@ -23,59 +27,73 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeEntity createRecipe(RecipeEntity recipe) {
+    public RecipeEntity createRecipe(RecipeRequestDto recipe) {
         if (recipe == null){
             throw new InvalidRecipeInputException("Recipe cannot be null");
         }
-        if (recipe.getName() == null){
+        if (recipe.name() == null){
             throw new InvalidRecipeInputException("Recipe name cannot be null");
         }
-        if (recipe.getName().isEmpty()){
+        if (recipe.name().isEmpty()){
             throw new InvalidRecipeInputException("Recipe name cannot be empty");
         }
-        if (recipe.getDescription() == null){
+        if (recipe.description() == null){
             throw new InvalidRecipeInputException("Recipe description cannot be null");
         }
-        if (recipe.getDescription().isEmpty()){
+        if (recipe.description().isEmpty()){
             throw new InvalidRecipeInputException("Recipe description cannot be empty");
         }
-        if (recipe.getInstructions() == null){
+        if (recipe.instructions() == null){
             throw new InvalidRecipeInputException("Recipe instructions cannot be null");
         }
-        if (recipe.getInstructions().isEmpty()){
+        if (recipe.instructions().isEmpty()){
             throw new InvalidRecipeInputException("Recipe instructions cannot be empty");
         }
-        return recipeRepository.save(recipe);
+        if (recipe.userId() == null){
+            throw new InvalidRecipeInputException("User ID cannot be null");
+        }
+        UserEntity user = userRepository.findById(recipe.userId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        RecipeEntity entity = RecipeEntity.builder()
+                .name(recipe.name())
+                .description(recipe.description())
+                .instructions(recipe.instructions())
+                .createdBy(user)
+                .build();
+
+        return recipeRepository.save(entity);
     }
 
-@Override
-    public RecipeEntity updateRecipe(UUID recipeId, RecipeEntity updatedRecipe) {
-        if (recipeId == null){
+    public RecipeEntity updateRecipe(UUID recipeId, RecipeRequestDto dto) {
+        if (recipeId == null) {
             throw new InvalidRecipeInputException("Recipe ID cannot be null");
         }
-        if (updatedRecipe == null){
-            throw new InvalidRecipeInputException("Recipe cannot be null");
+        if (dto == null) {
+            throw new InvalidRecipeInputException("Update data cannot be null");
         }
 
-        // Check if all update fields are empty
-        if ((updatedRecipe.getName() == null || updatedRecipe.getName().isEmpty()) &&
-            (updatedRecipe.getDescription() == null || updatedRecipe.getDescription().isEmpty()) &&
-            (updatedRecipe.getInstructions() == null || updatedRecipe.getInstructions().isEmpty())) {
+        boolean noChanges = (dto.name() == null || dto.name().isBlank()) &&
+                (dto.description() == null || dto.description().isBlank()) &&
+                (dto.instructions() == null || dto.instructions().isEmpty());
+
+        if (noChanges) {
             throw new InvalidRecipeInputException("At least one field must be provided for update");
         }
 
-        RecipeEntity savedRecipe = recipeRepository.findById(recipeId).orElseThrow(() -> new RecipeNotFoundException("Recipe with ID: " + recipeId + " does not exist"));
+        RecipeEntity savedRecipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RecipeNotFoundException("Recipe with ID: " + recipeId + " does not exist"));
 
-        if (updatedRecipe.getName() != null && !updatedRecipe.getName().isEmpty()) {
-            savedRecipe.setName(updatedRecipe.getName());
+        if (dto.name() != null && !dto.name().isBlank()) {
+            savedRecipe.setName(dto.name());
         }
 
-        if (updatedRecipe.getDescription() != null && !updatedRecipe.getDescription().isEmpty()) {
-            savedRecipe.setDescription(updatedRecipe.getDescription());
+        if (dto.description() != null && !dto.description().isBlank()) {
+            savedRecipe.setDescription(dto.description());
         }
 
-        if (updatedRecipe.getInstructions() != null && !updatedRecipe.getInstructions().isEmpty()) {
-            savedRecipe.setInstructions(updatedRecipe.getInstructions());
+        if (dto.instructions() != null && !dto.instructions().isEmpty()) {
+            savedRecipe.setInstructions(dto.instructions());
         }
 
         return recipeRepository.save(savedRecipe);
