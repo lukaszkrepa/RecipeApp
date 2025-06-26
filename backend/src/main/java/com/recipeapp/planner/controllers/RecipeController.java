@@ -1,10 +1,8 @@
 package com.recipeapp.planner.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recipeapp.planner.api.ApiResponse;
 import com.recipeapp.planner.domain.dto.RecipeRequestDto;
 import com.recipeapp.planner.domain.dto.RecipeResponseDto;
-import com.recipeapp.planner.domain.entities.RecipeEntity;
 import com.recipeapp.planner.errors.recipe.InvalidRecipeInputException;
 import com.recipeapp.planner.services.RecipeService;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +18,6 @@ import static com.recipeapp.planner.utils.UuidUtils.parse;
 public class RecipeController {
 
     private final RecipeService recipeService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public RecipeController(RecipeService recipeService) {
         this.recipeService = recipeService;
