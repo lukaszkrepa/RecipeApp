@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recipeapp.planner.api.ApiResponse;
 import com.recipeapp.planner.domain.dto.RecipeRequestDto;
 import com.recipeapp.planner.domain.dto.RecipeResponseDto;
+import com.recipeapp.planner.domain.entities.RecipeEntity;
 import com.recipeapp.planner.errors.recipe.InvalidRecipeInputException;
 import com.recipeapp.planner.services.RecipeService;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,14 @@ public class RecipeController {
     public ResponseEntity<ApiResponse<RecipeResponseDto>> getRecipeById(@PathVariable String recipeId) {
         final UUID uuid = parse(recipeId, () -> new InvalidRecipeInputException("Recipe id is invalid"));
 
-        RecipeResponseDto response = objectMapper.convertValue(recipeService.getRecipeById(uuid), RecipeResponseDto.class);
+        RecipeEntity recipe = recipeService.getRecipeById(uuid);
+        RecipeResponseDto response = new RecipeResponseDto(
+                recipe.getRecipeId(),
+                recipe.getName(),
+                recipe.getDescription(),
+                recipe.getInstructions(),
+                recipe.getCreatedBy() != null ? recipe.getCreatedBy().getUserId() : null
+        );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -55,7 +63,13 @@ public class RecipeController {
 
         List<RecipeResponseDto> response = recipeService.getAllRecipesByUserId(uuid)
                 .stream()
-                .map(x -> objectMapper.convertValue(x, RecipeResponseDto.class))
+                .map(recipe -> new RecipeResponseDto(
+                        recipe.getRecipeId(),
+                        recipe.getName(),
+                        recipe.getDescription(),
+                        recipe.getInstructions(),
+                        recipe.getCreatedBy() != null ? recipe.getCreatedBy().getUserId() : null
+                ))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
