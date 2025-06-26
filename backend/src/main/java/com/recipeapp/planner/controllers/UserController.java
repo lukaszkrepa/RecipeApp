@@ -41,7 +41,7 @@ public class UserController {
         UserEntity userEntity = userService.createUser(userRequestDto.username());
         ApiResponse<UserResponseDto> response = ApiResponse.success(UserResponseDto.from(userEntity));
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(201).body(response);
     }
 
     @GetMapping("/{userId}")
@@ -71,6 +71,6 @@ public class UserController {
         userService.deleteUser(uuid);
         ApiResponse<UserResponseDto> response = ApiResponse.success(null);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(204).body(response);
     }
 }
