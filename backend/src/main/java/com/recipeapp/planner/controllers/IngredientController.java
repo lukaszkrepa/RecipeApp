@@ -1,6 +1,5 @@
 package com.recipeapp.planner.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recipeapp.planner.api.ApiResponse;
 import com.recipeapp.planner.domain.dto.IngredientRequestDto;
 import com.recipeapp.planner.domain.dto.IngredientResponseDto;
@@ -21,8 +20,6 @@ public class IngredientController {
 
     private final IngredientService ingredientService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     public IngredientController(IngredientService ingredientService) {
         this.ingredientService = ingredientService;
     }
@@ -31,7 +28,7 @@ public class IngredientController {
     public ResponseEntity<ApiResponse<List<IngredientResponseDto>>> getAllIngredients() {
         List<IngredientResponseDto> response = ingredientService.getAllIngredients()
                 .stream()
-                .map(x -> objectMapper.convertValue(x, IngredientResponseDto.class))
+                .map(IngredientResponseDto::from)
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -39,7 +36,7 @@ public class IngredientController {
     }
     @PostMapping()
     public ResponseEntity<ApiResponse<IngredientResponseDto>> createIngredient(@RequestBody IngredientRequestDto ingredientRequestDto) {
-        IngredientResponseDto response = objectMapper.convertValue(ingredientService.createIngredient(ingredientRequestDto.name(), ingredientRequestDto.unit()), IngredientResponseDto.class);
+        IngredientResponseDto response = IngredientResponseDto.from(ingredientService.createIngredient(ingredientRequestDto.name(), ingredientRequestDto.unit()));
         return ResponseEntity.status(201).body(ApiResponse.success(response));
 
     }
@@ -47,7 +44,7 @@ public class IngredientController {
     public  ResponseEntity<ApiResponse<IngredientResponseDto>> getIngredientById(@PathVariable String ingredientId) {
         final UUID uuid = parse(ingredientId, () -> new InvalidIngredientInputException("Ingredient id is invalid"));
 
-        IngredientResponseDto response = objectMapper.convertValue(ingredientService.getIngredientById(uuid), IngredientResponseDto.class);
+        IngredientResponseDto response = IngredientResponseDto.from(ingredientService.getIngredientById(uuid));
         return ResponseEntity.ok(ApiResponse.success(response));
     }
     @PatchMapping("/{ingredientId}")
@@ -75,8 +72,7 @@ public class IngredientController {
             throw new InvalidIngredientInputException("At least one of name or unit must be provided");
         }
 
-        IngredientResponseDto body = objectMapper
-                .convertValue(updated, IngredientResponseDto.class);
+        IngredientResponseDto body = IngredientResponseDto.from(updated);
 
         return ResponseEntity
                 .ok(ApiResponse.success(body));
@@ -94,7 +90,7 @@ public class IngredientController {
     public ResponseEntity<ApiResponse<List<IngredientResponseDto>>> getIngredientsByName(@PathVariable String name) {
         List<IngredientResponseDto> response = ingredientService.getIngredientsByName(name)
                 .stream()
-                .map(x -> objectMapper.convertValue(x, IngredientResponseDto.class))
+                .map(IngredientResponseDto::from)
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success(response));
