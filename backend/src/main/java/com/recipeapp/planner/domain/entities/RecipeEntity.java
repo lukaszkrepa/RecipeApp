@@ -1,5 +1,6 @@
 package com.recipeapp.planner.domain.entities;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,4 +34,10 @@ public class RecipeEntity {
     @JoinColumn(name = "created_by", referencedColumnName = "userId")
     private UserEntity createdBy;
 
+    @JsonGetter("createdByUserId")
+    public UUID getCreatedByUserId() {
+        return createdBy != null
+                ? createdBy.getUserId()
+                : null;
+    }
 }
