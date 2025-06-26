@@ -72,7 +72,7 @@ public class RecipeController {
         final UUID uuid = parse(recipeId, () -> new InvalidRecipeInputException("Recipe id is invalid"));
 
         recipeService.deleteRecipe(uuid);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.status(204).body(ApiResponse.success(null));
     }
 
 
