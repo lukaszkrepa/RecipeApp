@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import static com.recipeapp.planner.utils.UuidUtils.parse;
+
 @RestController
 @RequestMapping("/ingredients")
 public class IngredientController {
@@ -41,27 +43,20 @@ public class IngredientController {
         return ResponseEntity.status(201).body(ApiResponse.success(response));
 
     }
-    @GetMapping("/{id}")
-    public  ResponseEntity<ApiResponse<IngredientResponseDto>> getIngredientById(@PathVariable String id) {final UUID uuid;
-        try {
-            uuid = UUID.fromString(id);
-        } catch (IllegalArgumentException ex) {
-            throw new InvalidIngredientInputException("Ingredient id is invalid");
-        }
+    @GetMapping("/{ingredientId}")
+    public  ResponseEntity<ApiResponse<IngredientResponseDto>> getIngredientById(@PathVariable String ingredientId) {
+        final UUID uuid = parse(ingredientId, () -> new InvalidIngredientInputException("Ingredient id is invalid"));
+
         IngredientResponseDto response = objectMapper.convertValue(ingredientService.getIngredientById(uuid), IngredientResponseDto.class);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-    @PatchMapping("/{id}")
+    @PatchMapping("/{ingredientId}")
     public ResponseEntity<ApiResponse<IngredientResponseDto>> updateIngredient(
-            @PathVariable String id,
+            @PathVariable String ingredientId,
             @RequestBody IngredientRequestDto dto) {
 
-        final UUID uuid;
-        try {
-            uuid = UUID.fromString(id);
-        } catch (IllegalArgumentException ex) {
-            throw new InvalidIngredientInputException("Ingredient id is invalid");
-        }
+        final UUID uuid = parse(ingredientId, () -> new InvalidIngredientInputException("Ingredient id is invalid"));
+
 
         boolean hasName = dto.name() != null;
         boolean hasUnit = dto.unit() != null;
@@ -87,14 +82,10 @@ public class IngredientController {
                 .ok(ApiResponse.success(body));
     }
 
-    @DeleteMapping("/{id}")
-    public  ResponseEntity<ApiResponse<IngredientResponseDto>> deleteIngredient(@PathVariable String id) {
-        final UUID uuid;
-        try {
-            uuid = UUID.fromString(id);
-        } catch (IllegalArgumentException ex) {
-            throw new InvalidIngredientInputException("Ingredient id is invalid");
-        }
+    @DeleteMapping("/{ingredientId}")
+    public  ResponseEntity<ApiResponse<IngredientResponseDto>> deleteIngredient(@PathVariable String ingredientId) {
+        final UUID uuid = parse(ingredientId, () -> new InvalidIngredientInputException("Ingredient id is invalid"));
+
         ingredientService.deleteIngredient(uuid);
         return ResponseEntity.status(204).body(ApiResponse.success(null));
     }
