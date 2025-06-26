@@ -31,7 +31,7 @@ public class RecipeController {
     public ResponseEntity<ApiResponse<List<RecipeResponseDto>>> getRecipes() {
         List<RecipeResponseDto> response = recipeService.getAllRecipes()
                 .stream()
-                .map(x -> objectMapper.convertValue(x, RecipeResponseDto.class))
+                .map(RecipeResponseDto::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -40,20 +40,13 @@ public class RecipeController {
     public ResponseEntity<ApiResponse<RecipeResponseDto>> getRecipeById(@PathVariable String recipeId) {
         final UUID uuid = parse(recipeId, () -> new InvalidRecipeInputException("Recipe id is invalid"));
 
-        RecipeEntity recipe = recipeService.getRecipeById(uuid);
-        RecipeResponseDto response = new RecipeResponseDto(
-                recipe.getRecipeId(),
-                recipe.getName(),
-                recipe.getDescription(),
-                recipe.getInstructions(),
-                recipe.getCreatedBy() != null ? recipe.getCreatedBy().getUserId() : null
-        );
+        RecipeResponseDto response = RecipeResponseDto.from(recipeService.getRecipeById(uuid));
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping()
     public ResponseEntity<ApiResponse<RecipeResponseDto>> createRecipe(@RequestBody RecipeRequestDto recipe) {
-        RecipeResponseDto response = objectMapper.convertValue(recipeService.createRecipe(recipe), RecipeResponseDto.class);
+        RecipeResponseDto response = RecipeResponseDto.from(recipeService.createRecipe(recipe));
         return ResponseEntity.status(201).body(ApiResponse.success(response));
     }
 
@@ -63,13 +56,7 @@ public class RecipeController {
 
         List<RecipeResponseDto> response = recipeService.getAllRecipesByUserId(uuid)
                 .stream()
-                .map(recipe -> new RecipeResponseDto(
-                        recipe.getRecipeId(),
-                        recipe.getName(),
-                        recipe.getDescription(),
-                        recipe.getInstructions(),
-                        recipe.getCreatedBy() != null ? recipe.getCreatedBy().getUserId() : null
-                ))
+                .map(RecipeResponseDto::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -80,7 +67,7 @@ public class RecipeController {
     {
         final UUID uuid = parse(recipeId, () -> new InvalidRecipeInputException("Recipe id is invalid"));
 
-        RecipeResponseDto response = objectMapper.convertValue(recipeService.updateRecipe(uuid, recipe), RecipeResponseDto.class);
+        RecipeResponseDto response = RecipeResponseDto.from(recipeService.updateRecipe(uuid, recipe));
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
