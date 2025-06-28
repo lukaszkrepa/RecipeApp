@@ -724,7 +724,7 @@ public class RecipeControllerTests {
         mockMvc.perform(delete("/recipes/" + recipeId)
                         .contentType("application/json"))
                 .andDo(print())
-                .andExpect(status().isOk())
+                .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.data").value(nullValue()))
@@ -755,3 +755,4 @@ public class RecipeControllerTests {
     }
 
 }
+
